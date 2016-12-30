@@ -42,6 +42,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	if len(args) != 4 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 4")
 	}
+	fmt.Printf("test JCO3")
 
 	// Initialize the chaincode
 	A = args[0]
@@ -86,6 +87,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return nil, errors.New("Incorrect number of arguments. Expecting 3")
 	}
 
+	fmt.Printf("test JCO2")
 	A = args[0]
 	B = args[1]
 
@@ -182,6 +184,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 
 func main() {
 	err := shim.Start(new(SimpleChaincode))
+	fmt.Printf("test JCO1")
+
 	if err != nil {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}
