@@ -38,7 +38,7 @@ import (
 //	"image/png"
 //	"io"
 //	"net/http"
-//	"os"
+	"os"
 //	"os/exec"
 //	"runtime"
 	"strconv"
@@ -52,6 +52,8 @@ import (
 type SimpleChaincode struct {
 }
 
+var gopath string
+var ccPath string
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // The following array holds the list of tables that should be created
@@ -102,6 +104,62 @@ type ContractObject struct {
 	DoctorName      string
 	DoctorComment      string
 
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// A Map that holds TableNames and the number of Keys
+// This information is used to dynamically Create, Update
+// Replace , and Query the Ledger
+// In this model all attributes in a table are strings
+// The chain code does both validation
+// A dummy key like 2016 in some cases is used for a query to get all rows
+//
+//              "UserTable":        1, Key: UserID
+//              "ItemTable":        1, Key: ItemID
+//              "UserCatTable":     3, Key: "2016", UserType, UserID
+//              "ItemCatTable":     3, Key: "2016", ItemSubject, ItemID
+//              "AuctionTable":     1, Key: AuctionID
+//              "AucInitTable":     2, Key: Year, AuctionID
+//              "AucOpenTable":     2, Key: Year, AuctionID
+//              "TransTable":       2, Key: AuctionID, ItemID
+//              "BidTable":         2, Key: AuctionID, BidNo
+//              "ItemHistoryTable": 4, Key: ItemID, Status, AuctionHouseID(if applicable),date-time
+//
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func GetNumberOfKeys(tname string) int {
+	TableMap := map[string]int{
+		"UserTable":        1,
+		"Contracts":        2,
+	}
+	return TableMap[tname]
+}
+//////////////////////////////////////////////////////////////
+// Invoke Functions based on Function name
+// The function name gets resolved to one of the following calls
+// during an invoke
+//
+//////////////////////////////////////////////////////////////
+func InvokeFunction(fname string) func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	InvokeFunc := map[string]func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error){
+		"PostRequest":      PostRequest,
+		"PostDoctorAnswer": PostDoctorAnswer,
+		"PostSellerAnswer": PostSellerAnswer,
+	}
+	return InvokeFunc[fname]
+}
+
+//////////////////////////////////////////////////////////////
+// Query Functions based on Function name
+//
+//////////////////////////////////////////////////////////////
+func QueryFunction(fname string) func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	QueryFunc := map[string]func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error){
+		"GetContract":           GetContract,
+		"GetListOfContractByStatus":           GetListOfContractByStatus,
+	}
+	return QueryFunc[fname]
 }
 
 
@@ -260,8 +318,13 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 func main() {
 	err := shim.Start(new(SimpleChaincode))
 	fmt.Printf("test JCO1")
+	
+	gopath = os.Getenv("GOPATH")
+    ccPath = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/auction/art/artchaincode/", gopath)
 
 	if err != nil {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}
+
+
 }
