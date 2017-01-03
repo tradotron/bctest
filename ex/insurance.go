@@ -31,6 +31,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"bytes"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 //	"image"
 //	"image/gif"
@@ -213,12 +214,16 @@ func PostCustomerRequest(stub shim.ChaincodeStubInterface, function string, args
 func CreateItemObject(args []string) (ContractObject, error) {
 
 	var err error
+	var bufferErrTxt bytes.Buffer
 	var myItem ContractObject
 
 	// Check there are 12 Arguments provided as per the the struct - two are computed
 	if len(args) != 10 {
 		fmt.Println("CreateItemObject(): Incorrect number of arguments. Expecting 12 ", len(args))
-		return myItem, errors.New("CreateItemObject(): Incorrect number of arguments. Expecting 12 ")
+		bufferErrTxt.WriteString("CreateItemObject(): Incorrect number of arguments. Expecting 10 ")
+		bufferErrTxt.WriteString(args[0])
+
+		return myItem, errors.New(bufferErrTxt.String())
 	}
 
 	// Validate ItemID is an integer
@@ -226,6 +231,7 @@ func CreateItemObject(args []string) (ContractObject, error) {
 	_, err = strconv.Atoi(args[0])
 	if err != nil {
 		fmt.Println("CreateItemObject(): ART ID should be an integer create failed! ")
+		
 		return myItem, errors.New("CreateItemObject(): ART ID should be an integer create failed!")
 	}
 
