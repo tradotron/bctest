@@ -241,7 +241,27 @@ func CreateItemObject(args []string) (ContractObject, error) {
 	return myItem, nil
 }
 
+func GetContract(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
+	//var err error
+
+	// Get the Objects and Display it
+	Avalbytes, err := QueryLedger(stub, "Contracts", args)
+	if Avalbytes == nil {
+		fmt.Println("GetTransaction() : Incomplete Query Object ")
+		jsonResp := "{\"Error\":\"Incomplete information about the key for " + args[0] + "\"}"
+		return nil, errors.New(jsonResp)
+	}
+
+	if err != nil {
+		fmt.Println("GetTransaction() : Failed to Query Object ")
+		jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
+		return nil, errors.New(jsonResp)
+	}
+
+	fmt.Println("GetTransaction() : Response : Successfull")
+	return Avalbytes, nil
+}
 //////////////////////////////////////////////////////////
 // Converts an ART Object to a JSON String
 //////////////////////////////////////////////////////////
