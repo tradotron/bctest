@@ -218,7 +218,7 @@ func CreateItemObject(args []string) (ContractObject, error) {
 	var myItem ContractObject
 
 	// Check there are 12 Arguments provided as per the the struct - two are computed
-	if len(args) != 10 {
+	if len(args) != 11 {
 		fmt.Println("CreateItemObject(): Incorrect number of arguments. Expecting 12 ", len(args))
 		bufferErrTxt.WriteString("CreateItemObject(): Incorrect number of arguments. Expecting 10 ")
 		bufferErrTxt.WriteString(args[0])
