@@ -523,6 +523,33 @@ func DeleteFromLedger(stub shim.ChaincodeStubInterface, tableName string, keys [
 
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	// TODO - Include all initialization to be complete before Invoke and Query
+	// Uses aucTables to delete tables if they exist and re-create them
+
+	//myLogger.Info("[Trade and Auction Application] Init")
+	fmt.Println("[Trade and Auction Application] Init")
+	var err error
+
+	for _, val := range aucTables {
+		err = stub.DeleteTable(val)
+		if err != nil {
+			return nil, fmt.Errorf("Init(): DeleteTable of %s  Failed ", val)
+		}
+		err = InitLedger(stub, val)
+		if err != nil {
+			return nil, fmt.Errorf("Init(): InitLedger of %s  Failed ", val)
+		}
+	}
+	// Update the ledger with the Application version
+	err = stub.PutState("version", []byte(strconv.Itoa(1)))
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Init() Initialization Complete  : ", args)
+	return []byte("Init(): Initialization Complete"), nil
+
+/*
 	var A, B string    // Entities
 	var Aval, Bval int // Asset holdings
 	var err error
@@ -557,9 +584,11 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 
 	return nil, nil
+*/
 }
 
 // Transaction makes payment of X units from A to B
+/*
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	if function == "delete" {
 		// Deletes an entity from its state
@@ -624,8 +653,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 
 	return nil, nil
 }
-
+*/
 // Deletes an entity from state
+/*
 func (t *SimpleChaincode) delete(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
@@ -641,8 +671,9 @@ func (t *SimpleChaincode) delete(stub shim.ChaincodeStubInterface, args []string
 
 	return nil, nil
 }
-
+*/
 // Query callback representing the query of a chaincode
+/*
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	if function != "query" {
 		return nil, errors.New("Invalid query function name. Expecting \"query\"")
@@ -672,7 +703,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	fmt.Printf("Query Response:%s\n", jsonResp)
 	return Avalbytes, nil
 }
-
+*/
 func main() {
 	err := shim.Start(new(SimpleChaincode))
 	fmt.Printf("test JCO1")
