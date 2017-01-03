@@ -671,6 +671,26 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 */
 }
 
+
+/////////////////////////////////////////////////////////////////
+// This function checks the incoming args stuff for a valid record
+// type entry as per the declared array recType[]
+// The assumption is that rectType can be anywhere in the args or struct
+// not necessarily in args[1] as per my old logic
+// The Request type is used to process the record accordingly
+/////////////////////////////////////////////////////////////////
+func ChkReqType(args []string) bool {
+	for _, rt := range args {
+		for _, val := range recType {
+			if val == rt {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+
 // Deletes an entity from state
 /*
 func (t *SimpleChaincode) delete(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
