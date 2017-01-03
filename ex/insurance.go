@@ -23,11 +23,30 @@ package main
 //hard-coding.
 
 import (
+	"bufio"
+	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
-
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	//"github.com/op/go-logging"
+	"image"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
+	"io"
+	"net/http"
+	"os"
+	"os/exec"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
+
+
 )
 
 // SimpleChaincode example simple Chaincode implementation
