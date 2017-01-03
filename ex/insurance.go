@@ -530,7 +530,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	fmt.Println("[Trade and Auction Application] Init")
 	var err error
 
-	for _, val := range aucTables {
+	for _, val := range insuranceTables {
 		err = stub.DeleteTable(val)
 		if err != nil {
 			return nil, fmt.Errorf("Init(): DeleteTable of %s  Failed ", val)
@@ -588,8 +588,22 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 }
 
 // Transaction makes payment of X units from A to B
-/*
+
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+
+	if ChkReqType(args) == true {
+
+		InvokeRequest := InvokeFunction(function)
+		if InvokeRequest != nil {
+			buff, err = InvokeRequest(stub, function, args)
+		}
+	} else {
+		fmt.Println("Invoke() Invalid recType : ", args, "\n")
+		return nil, errors.New("Invoke() : Invalid recType : " + args[0])
+	}
+
+	return buff, err
+/*
 	if function == "delete" {
 		// Deletes an entity from its state
 		return t.delete(stub, args)
@@ -652,8 +666,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	}
 
 	return nil, nil
-}
 */
+}
+
 // Deletes an entity from state
 /*
 func (t *SimpleChaincode) delete(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -673,8 +688,32 @@ func (t *SimpleChaincode) delete(stub shim.ChaincodeStubInterface, args []string
 }
 */
 // Query callback representing the query of a chaincode
-/*
+
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	var err error
+	var buff []byte
+	fmt.Println("ID Extracted and Type = ", args[0])
+	fmt.Println("Args supplied : ", args)
+
+	if len(args) < 1 {
+		fmt.Println("Query() : Include at least 1 arguments Key ")
+		return nil, errors.New("Query() : Expecting Transation type and Key value for query")
+	}
+
+	QueryRequest := QueryFunction(function)
+	if QueryRequest != nil {
+		buff, err = QueryRequest(stub, function, args)
+	} else {
+		fmt.Println("Query() Invalid function call : ", function)
+		return nil, errors.New("Query() : Invalid function call : " + function)
+	}
+
+	if err != nil {
+		fmt.Println("Query() Object not found : ", args[0])
+		return nil, errors.New("Query() : Object not found : " + args[0])
+	}
+	return buff, err
+/*
 	if function != "query" {
 		return nil, errors.New("Invalid query function name. Expecting \"query\"")
 	}
@@ -702,8 +741,9 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	jsonResp := "{\"Name\":\"" + A + "\",\"Amount\":\"" + string(Avalbytes) + "\"}"
 	fmt.Printf("Query Response:%s\n", jsonResp)
 	return Avalbytes, nil
-}
 */
+}
+
 func main() {
 	err := shim.Start(new(SimpleChaincode))
 	fmt.Printf("test JCO1")
