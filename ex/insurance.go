@@ -191,7 +191,7 @@ func PostCustomerRequest(stub shim.ChaincodeStubInterface, function string, args
 	//}
 
 	// Convert Item Object to JSON
-	buff, err := ARtoJSON(itemObject) //
+	buff, err := ContracttoJSON(itemObject) //
 	if err != nil {
 		fmt.Println("PostItem() : Failed Cannot create object buffer for write : ", args[1])
 		return nil, errors.New("PostItem(): Failed Cannot create object buffer for write : " + args[1])
@@ -207,9 +207,7 @@ func PostCustomerRequest(stub shim.ChaincodeStubInterface, function string, args
 
 	}
 
-	secret_key, _ := json.Marshal(itemObject.AES_Key)
-	fmt.Println(string(secret_key))
-	return secret_key, nil
+	return buf, nil
 }
 
 func CreateItemObject(args []string) (ContractObject, error) {
@@ -234,13 +232,27 @@ func CreateItemObject(args []string) (ContractObject, error) {
 
 	myItem = ContractObject{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]}
 
-	fmt.Println("CreateItemObject(): Item Object created: ID# ", myItem.ItemID)
+	fmt.Println("CreateItemObject(): Item Object created: ID# ", myItem.ContractID)
 
 	// Code to Validate the Item Object)
 	// If User presents Crypto Key then key is used to validate the picture that is stored as part of the title
 	// TODO
 
 	return myItem, nil
+}
+
+
+//////////////////////////////////////////////////////////
+// Converts an ART Object to a JSON String
+//////////////////////////////////////////////////////////
+func ContracttoJSON(ar ContractObject) ([]byte, error) {
+
+	ajson, err := json.Marshal(ar)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return ajson, nil
 }
 
 ////////////////////////////////////////////////////////////////////////////
