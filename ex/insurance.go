@@ -25,10 +25,10 @@ package main
 import (
 //	"bufio"
 //	"bytes"
-//	"crypto/aes"
+	"crypto/aes"
 //	"crypto/cipher"
 //	"crypto/rand"
-//	"encoding/json"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -100,6 +100,7 @@ type ContractObject struct {
 	Price    string 
 	CreateDate   string
 	CustomerName     string
+	CustomerAge     string
 	Seller     string
 	DoctorName      string
 	DoctorComment      string
@@ -143,9 +144,9 @@ func GetNumberOfKeys(tname string) int {
 //////////////////////////////////////////////////////////////
 func InvokeFunction(fname string) func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	InvokeFunc := map[string]func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error){
-		"PostRequest":      PostRequest,
-		"PostDoctorAnswer": PostDoctorAnswer,
-		"PostSellerAnswer": PostSellerAnswer,
+		"PostCustomerRequest":      PostCustomerRequest,
+//		"PostDoctorAnswer": PostDoctorAnswer,
+//		"PostSellerAnswer": PostSellerAnswer,
 	}
 	return InvokeFunc[fname]
 }
@@ -157,10 +158,203 @@ func InvokeFunction(fname string) func(stub shim.ChaincodeStubInterface, functio
 func QueryFunction(fname string) func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	QueryFunc := map[string]func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error){
 		"GetContract":           GetContract,
-		"GetListOfContractByStatus":           GetListOfContractByStatus,
+//		"GetListOfContractByStatus":           GetListOfContractByStatus,
 	}
 	return QueryFunc[fname]
 }
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Create a master Object of the Item
+// Since the Owner Changes hands, a record has to be written for each
+// Transaction with the updated Encryption Key of the new owner
+// Example
+//./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1000", "ARTINV", "Shadows by Asppen", "Asppen Messer", "20140202", "Original", "Landscape" , "Canvas", "15 x 15 in", "sample_7.png","$600", "100"]}'
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func PostCustomerRequest(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+
+	itemObject, err := CreateItemObject(args[0:])
+	if err != nil {
+		fmt.Println("PostItem(): Cannot create item object \n")
+		return nil, err
+	}
+
+	// Check if the Owner ID specified is registered and valid
+	//ownerInfo, err := ValidateMember(stub, itemObject.CurrentOwnerID)
+	//fmt.Println("Owner information  ", ownerInfo, itemObject.CurrentOwnerID)
+	//if err != nil {
+	//	fmt.Println("PostItem() : Failed Owner information not found for ", itemObject.CurrentOwnerID)
+	//	return nil, err
+	//}
+
+	// Convert Item Object to JSON
+	buff, err := ARtoJSON(itemObject) //
+	if err != nil {
+		fmt.Println("PostItem() : Failed Cannot create object buffer for write : ", args[1])
+		return nil, errors.New("PostItem(): Failed Cannot create object buffer for write : " + args[1])
+	} else {
+		// Update the ledger with the Buffer Data
+		keys := []string{args[0]}
+		err = UpdateLedger(stub, "Contracts", keys, buff)
+		if err != nil {
+			fmt.Println("PostItem() : write error while inserting record\n")
+			return buff, err
+		}
+
+
+	}
+
+	secret_key, _ := json.Marshal(itemObject.AES_Key)
+	fmt.Println(string(secret_key))
+	return secret_key, nil
+}
+
+func CreateItemObject(args []string) (ContractObject, error) {
+
+	var err error
+	var myItem ContractObject
+
+	// Check there are 12 Arguments provided as per the the struct - two are computed
+	if len(args) != 1O {
+		fmt.Println("CreateItemObject(): Incorrect number of arguments. Expecting 12 ")
+		return myItem, errors.New("CreateItemObject(): Incorrect number of arguments. Expecting 12 ")
+	}
+
+	// Validate ItemID is an integer
+
+	_, err = strconv.Atoi(args[0])
+	if err != nil {
+		fmt.Println("CreateItemObject(): ART ID should be an integer create failed! ")
+		return myItem, errors.New("CreateItemObject(): ART ID should be an integer create failed!")
+	}
+
+
+	myItem = ContractObject{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]}
+
+	fmt.Println("CreateItemObject(): Item Object created: ID# ", myItem.ItemID)
+
+	// Code to Validate the Item Object)
+	// If User presents Crypto Key then key is used to validate the picture that is stored as part of the title
+	// TODO
+
+	return myItem, nil
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Open a Ledgers if one does not exist
+// These ledgers will be used to write /  read data
+// Use names are listed in aucTables {}
+// THIS FUNCTION REPLACES ALL THE INIT Functions below
+//  - InitUserReg()
+//  - InitAucReg()
+//  - InitBidReg()
+//  - InitItemReg()
+//  - InitItemMaster()
+//  - InitTransReg()
+//  - InitAuctionTriggerReg()
+//  - etc. etc.
+////////////////////////////////////////////////////////////////////////////
+func InitLedger(stub shim.ChaincodeStubInterface, tableName string) error {
+
+	// Generic Table Creation Function - requires Table Name and Table Key Entry
+	// Create Table - Get number of Keys the tables supports
+	// This version assumes all Keys are String and the Data is Bytes
+	// This Function can replace all other InitLedger function in this app such as InitItemLedger()
+
+	nKeys := GetNumberOfKeys(tableName)
+	if nKeys < 1 {
+		fmt.Println("Atleast 1 Key must be provided \n")
+		fmt.Println("Auction_Application: Failed creating Table ", tableName)
+		return errors.New("Auction_Application: Failed creating Table " + tableName)
+	}
+
+	var columnDefsForTbl []*shim.ColumnDefinition
+
+	for i := 0; i < nKeys; i++ {
+		columnDef := shim.ColumnDefinition{Name: "keyName" + strconv.Itoa(i), Type: shim.ColumnDefinition_STRING, Key: true}
+		columnDefsForTbl = append(columnDefsForTbl, &columnDef)
+	}
+
+	columnLastTblDef := shim.ColumnDefinition{Name: "Details", Type: shim.ColumnDefinition_BYTES, Key: false}
+	columnDefsForTbl = append(columnDefsForTbl, &columnLastTblDef)
+
+	// Create the Table (Nil is returned if the Table exists or if the table is created successfully
+	err := stub.CreateTable(tableName, columnDefsForTbl)
+
+	if err != nil {
+		fmt.Println("Auction_Application: Failed creating Table ", tableName)
+		return errors.New("Auction_Application: Failed creating Table " + tableName)
+	}
+
+	return err
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Open a User Registration Table if one does not exist
+// Register users into this table
+////////////////////////////////////////////////////////////////////////////
+func UpdateLedger(stub shim.ChaincodeStubInterface, tableName string, keys []string, args []byte) error {
+
+	nKeys := GetNumberOfKeys(tableName)
+	if nKeys < 1 {
+		fmt.Println("Atleast 1 Key must be provided \n")
+	}
+
+	var columns []*shim.Column
+
+	for i := 0; i < nKeys; i++ {
+		col := shim.Column{Value: &shim.Column_String_{String_: keys[i]}}
+		columns = append(columns, &col)
+	}
+
+	lastCol := shim.Column{Value: &shim.Column_Bytes{Bytes: []byte(args)}}
+	columns = append(columns, &lastCol)
+
+	row := shim.Row{columns}
+	ok, err := stub.InsertRow(tableName, row)
+	if err != nil {
+		return fmt.Errorf("UpdateLedger: InsertRow into "+tableName+" Table operation failed. %s", err)
+	}
+	if !ok {
+		return errors.New("UpdateLedger: InsertRow into " + tableName + " Table failed. Row with given key " + keys[0] + " already exists")
+	}
+
+	fmt.Println("UpdateLedger: InsertRow into ", tableName, " Table operation Successful. ")
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Open a User Registration Table if one does not exist
+// Register users into this table
+////////////////////////////////////////////////////////////////////////////
+func DeleteFromLedger(stub shim.ChaincodeStubInterface, tableName string, keys []string) error {
+	var columns []shim.Column
+
+	//nKeys := GetNumberOfKeys(tableName)
+	nCol := len(keys)
+	if nCol < 1 {
+		fmt.Println("Atleast 1 Key must be provided \n")
+		return errors.New("DeleteFromLedger failed. Must include at least key values")
+	}
+
+	for i := 0; i < nCol; i++ {
+		colNext := shim.Column{Value: &shim.Column_String_{String_: keys[i]}}
+		columns = append(columns, colNext)
+	}
+
+	err := stub.DeleteRow(tableName, columns)
+	if err != nil {
+		return fmt.Errorf("DeleteFromLedger operation failed. %s", err)
+	}
+
+	fmt.Println("DeleteFromLedger: DeleteRow from ", tableName, " Table operation Successful. ")
+	return nil
+}
+
+
 
 
 
