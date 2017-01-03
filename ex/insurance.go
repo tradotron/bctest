@@ -52,6 +52,60 @@ import (
 type SimpleChaincode struct {
 }
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// The following array holds the list of tables that should be created
+// The deploy/init deletes the tables and recreates them every time a deploy is invoked
+//////////////////////////////////////////////////////////////////////////////////////////////////
+var insuranceTables = []string{"UserTable", "Contracts"}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// The recType is a mandatory attribute. The original app was written with a single table
+// in mind. The only way to know how to process a record was the 70's style 80 column punch card
+// which used a record type field. The array below holds a list of valid record types.
+// This could be stored on a blockchain table or an application
+//////////////////////////////////////////////////////////////////////////////////////////////////
+var recType = []string{"CONTRACT", "USER"}
+
+
+/////////////////////////////////////////////////////////////
+// Create Buyer, Seller , Auction House, Authenticator
+// Could establish valid UserTypes -
+// AH (Auction House)
+// TR (Buyer or Seller)
+// AP (Appraiser)
+// IN (Insurance)
+// BK (bank)
+// SH (Shipper)
+/////////////////////////////////////////////////////////////
+type UserObject struct {
+	UserID    string
+	RecType   string // Type = USER
+	Name      string
+	UserType  string // Auction House (AH), Bank (BK), Buyer or Seller (TR), Shipper (SH), Appraiser (AP)
+	Address   string
+	Phone     string
+	Email     string
+	Bank      string
+	AccountNo string
+	RoutingNo string
+}
+
+type ContractObject struct {
+	ContractID    string
+	RecType   string // Type = USER
+	Status    string
+	Price    string 
+	CreateDate   string
+	CustomerName     string
+	Seller     string
+	DoctorName      string
+	DoctorComment      string
+
+}
+
+
+
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	var A, B string    // Entities
 	var Aval, Bval int // Asset holdings
