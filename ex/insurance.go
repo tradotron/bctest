@@ -291,10 +291,10 @@ func JSONtoUser(user []byte) (UserObject, error) {
 //////////////////////////////////////////////////////////
 // Converts an Contract Object to a JSON String
 //////////////////////////////////////////////////////////
-func JSONtoUser(user []byte) (ContractObject, error) {
+func JSONtoContract(contract []byte) (ContractObject, error) {
 
 	ur := ContractObject{}
-	err := json.Unmarshal(user, &ur)
+	err := json.Unmarshal(contract, &ur)
 	if err != nil {
 		fmt.Println("JSONtoContart error: ", err)
 		return ur, err
