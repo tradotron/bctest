@@ -357,6 +357,43 @@ func UpdateLedger(stub shim.ChaincodeStubInterface, tableName string, keys []str
 	fmt.Println("UpdateLedger: InsertRow into ", tableName, " Table operation Successful. ")
 	return nil
 }
+////////////////////////////////////////////////////////////////////////////
+// Query a User Object by Table Name and Key
+////////////////////////////////////////////////////////////////////////////
+func QueryLedger(stub *shim.ChaincodeStub, tableName string, args []string) ([]byte, error) {
+
+	var columns []shim.Column
+	nCol := GetNumberOfKeys(tableName)
+	for i := 0; i < nCol; i++ {
+		colNext := shim.Column{Value: &shim.Column_String_{String_: args[i]}}
+		columns = append(columns, colNext)
+	}
+
+	row, err := stub.GetRow(tableName, columns)
+	fmt.Println("Length or number of rows retrieved ", len(row.Columns))
+
+	if len(row.Columns) == 0 {
+		jsonResp := "{\"Error\":\"Failed retrieving data " + args[0] + ". \"}"
+		fmt.Println("Error retrieving data record for Key = ", args[0], "Error : ", jsonResp)
+		return nil, errors.New(jsonResp)
+	}
+
+	//fmt.Println("User Query Response:", row)
+	//jsonResp := "{\"Owner\":\"" + string(row.Columns[nCol].GetBytes()) + "\"}"
+	//fmt.Println("User Query Response:%s\n", jsonResp)
+	Avalbytes := row.Columns[nCol].GetBytes()
+
+	// Perform Any additional processing of data
+	fmt.Println("QueryLedger() : Successful - Proceeding to ProcessRequestType ")
+	err = ProcessQueryResult(stub, Avalbytes, args)
+	if err != nil {
+		fmt.Println("QueryLedger() : Cannot create object  : ", args[1])
+		jsonResp := "{\"QueryLedger() Error\":\" Cannot create Object for key " + args[0] + "\"}"
+		return nil, errors.New(jsonResp)
+	}
+	return Avalbytes, nil
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 // Open a User Registration Table if one does not exist
