@@ -207,7 +207,7 @@ func PostCustomerRequest(stub shim.ChaincodeStubInterface, function string, args
 
 	}
 
-	return buf, nil
+	return buff, nil
 }
 
 func CreateItemObject(args []string) (ContractObject, error) {
@@ -273,6 +273,34 @@ func ContracttoJSON(ar ContractObject) ([]byte, error) {
 		return nil, err
 	}
 	return ajson, nil
+}
+//////////////////////////////////////////////////////////
+// Converts an User Object to a JSON String
+//////////////////////////////////////////////////////////
+func JSONtoUser(user []byte) (UserObject, error) {
+
+	ur := UserObject{}
+	err := json.Unmarshal(user, &ur)
+	if err != nil {
+		fmt.Println("JSONtoUser error: ", err)
+		return ur, err
+	}
+	fmt.Println("JSONtoUser created: ", ur)
+	return ur, err
+}
+//////////////////////////////////////////////////////////
+// Converts an Contract Object to a JSON String
+//////////////////////////////////////////////////////////
+func JSONtoUser(user []byte) (ContractObject, error) {
+
+	ur := ContractObject{}
+	err := json.Unmarshal(user, &ur)
+	if err != nil {
+		fmt.Println("JSONtoContart error: ", err)
+		return ur, err
+	}
+	fmt.Println("JSONtoContartc created: ", ur)
+	return ur, err
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -394,6 +422,51 @@ func QueryLedger(stub shim.ChaincodeStubInterface, tableName string, args []stri
 	return Avalbytes, nil
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Return the right Object Buffer after validation to write to the ledger
+// var recType = []string{"ARTINV", "USER", "BID", "AUCREQ", "POSTTRAN", "OPENAUC", "CLAUC"}
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+func ProcessQueryResult(stub shim.ChaincodeStubInterface, Avalbytes []byte, args []string) error {
+
+	// Identify Record Type by scanning the args for one of the recTypes
+	// This is kind of a post-processor once the query fetches the results
+	// RecType is the style of programming in the punch card days ..
+	// ... well
+
+	var dat map[string]interface{}
+
+	if err := json.Unmarshal(Avalbytes, &dat); err != nil {
+		panic(err)
+	}
+
+	var recType string
+	recType = dat["RecType"].(string)
+	switch recType {
+
+	case "USER":
+		ur, err := JSONtoUser(Avalbytes) //
+		if err != nil {
+			return err
+		}
+		fmt.Println("ProcessRequestType() : ", ur)
+		return err
+	case "CONTRACT":
+		ur, err := JSONtoContract(Avalbytes) //
+		if err != nil {
+			return err
+		}
+		fmt.Println("ProcessRequestType() : ", ur)
+		return err
+
+	default:
+
+		return errors.New("Unknown")
+	}
+	return nil
+
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 // Open a User Registration Table if one does not exist
@@ -422,6 +495,28 @@ func DeleteFromLedger(stub shim.ChaincodeStubInterface, tableName string, keys [
 	fmt.Println("DeleteFromLedger: DeleteRow from ", tableName, " Table operation Successful. ")
 	return nil
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
