@@ -590,6 +590,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 // Transaction makes payment of X units from A to B
 
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	var err error
+	var buff []byte
 
 	if ChkReqType(args) == true {
 
