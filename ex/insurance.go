@@ -360,7 +360,7 @@ func UpdateLedger(stub shim.ChaincodeStubInterface, tableName string, keys []str
 ////////////////////////////////////////////////////////////////////////////
 // Query a User Object by Table Name and Key
 ////////////////////////////////////////////////////////////////////////////
-func QueryLedger(stub *shim.ChaincodeStub, tableName string, args []string) ([]byte, error) {
+func QueryLedger(stub shim.ChaincodeStubInterface, tableName string, args []string) ([]byte, error) {
 
 	var columns []shim.Column
 	nCol := GetNumberOfKeys(tableName)
