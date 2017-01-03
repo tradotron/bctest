@@ -218,7 +218,7 @@ func CreateItemObject(args []string) (ContractObject, error) {
 	// Check there are 12 Arguments provided as per the the struct - two are computed
 	if len(args) != 10 {
 		fmt.Println("CreateItemObject(): Incorrect number of arguments. Expecting 12 ", len(args))
-		return myItem, errors.New("CreateItemObject(): Incorrect number of arguments. Expecting 12 ", len(args))
+		return myItem, errors.New("CreateItemObject(): Incorrect number of arguments. Expecting 12 ")
 	}
 
 	// Validate ItemID is an integer
