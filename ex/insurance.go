@@ -25,7 +25,7 @@ package main
 import (
 //	"bufio"
 //	"bytes"
-	"crypto/aes"
+//	"crypto/aes"
 //	"crypto/cipher"
 //	"crypto/rand"
 	"encoding/json"
@@ -218,7 +218,7 @@ func CreateItemObject(args []string) (ContractObject, error) {
 	var myItem ContractObject
 
 	// Check there are 12 Arguments provided as per the the struct - two are computed
-	if len(args) != 12 {
+	if len(args) != 10 {
 		fmt.Println("CreateItemObject(): Incorrect number of arguments. Expecting 12 ")
 		return myItem, errors.New("CreateItemObject(): Incorrect number of arguments. Expecting 12 ")
 	}
